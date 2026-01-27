@@ -1,0 +1,8 @@
+run the darshan_to_json.sh bash script using :  
+
+./darshan_to_json.sh example.darshan
+
+
+the year-life-dataset was taken from: https://zenodo.org/records/1345780
+(there were some authorization issues on the alcf logs, so i used this for now)
+

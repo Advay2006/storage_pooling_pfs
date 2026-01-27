@@ -1,0 +1,2 @@
+log_file,job_id,uid,nprocs,start_time,end_time,run_time,perf_by_slowest,time_by_slowest,total_bytes,total_files,partial_flag
+example.darshan,1024637,6462,16384,1487112914,1487112931,18.0,12730506.127971025,14.84668575624994,189005824,1,False
