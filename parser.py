@@ -2,23 +2,13 @@ import darshan
 import pandas as pd
 from pathlib import Path
 
-# =============================
-# Helper to safely convert module to dataframe
-# =============================
 def safe_to_df(rec):
-    """
-    Safely converts a Darshan record to a dataframe.
-    Returns None if the module cannot be converted.
-    """
     try:
         return rec.to_df()
     except Exception as e:
-        print(f"  [SKIPPED] cannot convert module to df: {e}")
+        print(f"[SKIPPED] cannot convert to df: {e}")
         return None
 
-# =============================
-# Main parser
-# =============================
 def main():
     import sys
     if len(sys.argv) != 2:
@@ -26,32 +16,39 @@ def main():
         return
 
     darshan_file = sys.argv[1]
-    report = darshan.DarshanReport(darshan_file, read_all=True)
 
     print(f"Parsing Darshan log: {darshan_file}")
     print(f"Darshan version: {darshan.__version__}")
 
-    # Iterate over all modules
-    for module, rec in report.records.items():
-        print(f"\n=== Module: {module} ===")
+    # create report without eager loading
+    report = darshan.DarshanReport(darshan_file, read_all=False)
 
-        dfs = safe_to_df(rec)
-        if dfs is None:
-            continue
+    # load all generic records for all modules
+    report.read_all_generic_records()
 
-        # Check if module returned multiple dfs (counters, fcounters, etc.)
-        if isinstance(dfs, dict):
-            for k, df in dfs.items():
-                print(f"\n  [{k}] columns:")
-                print(list(df.columns))
-                
-        else:
-            print("  columns:")
-            print(list(dfs.columns))
-
-    # Optional: output summary of modules present
+    # inspect modules available
     print("\nModules present in log:")
-    print(list(report.records.keys()))
+    print(list(report.modules.keys()))
+
+    # try to convert POSIX if present
+    if "POSIX" in report.modules:
+        # read generic records for POSIX if not already populated
+        data = report.records.get("POSIX")
+        if data is None:
+            report.read_generic_records("POSIX", dtype="counters")
+            data = report.records.get("POSIX")
+
+        df_dict = safe_to_df(data)
+        if df_dict:
+            # print counters table if available
+            if isinstance(df_dict, dict) and "counters" in df_dict:
+                print("\nPOSIX counters:")
+                print(df_dict["counters"].head())
+            else:
+                print("\nPOSIX records df columns:")
+                print(df_dict.columns.tolist())
+    else:
+        print("No POSIX module in this log.")
 
 if __name__ == "__main__":
     main()
